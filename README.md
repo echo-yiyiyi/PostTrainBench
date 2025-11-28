@@ -6,7 +6,7 @@ We introduce PostTrainBench, a benchmark which measures the ability of AI agents
 
 ## Roadmap
 
-Goal: Mid / End of January: release of v1.0 of the benchmark
+Goal: Mid / End of January: release v1.0 of the benchmark
 
 Until then, we gather:
 - more tasks
