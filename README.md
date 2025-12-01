@@ -6,7 +6,8 @@ We introduce PostTrainBench, a benchmark which measures the ability of AI agents
 **We are actively looking for collaborators to gather more tasks and agent scaffolds. Collaborators can become co-authors or our paper. More information below.**
 
 ## Roadmap
-Goal: Mid / End of January: release v1.0 of the benchmark
+- Mid of December: release v0.1 of the benchmark
+- Mid / End of January: release v1.0 of the benchmark
 
 Our goal with v1.0 is to have a simple, yet effective way to measure the performance of AI agents on performing AI R&D.
 For this we want to add:
