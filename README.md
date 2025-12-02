@@ -37,12 +37,14 @@ We are especially interested in people who can contribute more tasks and agents.
 People with substantial contributions can become co-authors on our paper.
 ### Adding Tasks
 If you want to add a task, make sure the following conditions hold:
-- The task is not too difficult for the human post-trained versions of the four models we test on (TODO). It should achieve significantly above random chance or simple baselines.
+- The task is not too difficult for the human post-trained versions of the four models we test on ([Qwen-3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B), [Qwen-3-4B](https://huggingface.co/Qwen/Qwen3-4B), [SmolLM3-3B](https://huggingface.co/HuggingFaceTB/SmolLM3-3B) and [Gemma-3-4B](https://huggingface.co/google/gemma-3-4b-it)). It should achieve significantly above random chance or simple baselines.
 - Make sure that the default parameters allow the agent to run the evaluation on the H100 rather fast. 15 minutes is a good guideline. For minimal evaluation time, it is advisable to use vllm for inference. Additionally, you can subsample the benchmark.
 
 ### Adding Agents
 When implementing agents, your code should go into a directory `agents/agent_name/`, where `agent_name` is your new agent. You then need to implement a script `agents/agent_name/solve.sh`, which calls the agent to solve the task.
 See `agents/codex/` and `agents/claude/` for examples.
+
+It makes sense to add agents in a way that they can access the web, e.g. by a web-search tool.
 
 ## Requirements
 - `apptainer`
