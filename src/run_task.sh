@@ -15,7 +15,7 @@ AGENT_CONFIG_SAFE=$(echo "$AGENT_CONFIG" | tr '/:' '_')
 
 RANDOM_UUID=$(uuidgen)
 
-EVAL_DIR="${POST_TRAIN_BENCH_RESULTS_DIR}/${AGENT}_${AGENT_CONFIG_SAFE}_final_final/${EVALUATION_TASK}_${RESULT_PREFIX_SAFE}_${CLUSTER_ID}"
+EVAL_DIR="${POST_TRAIN_BENCH_RESULTS_DIR}/${AGENT}_${AGENT_CONFIG_SAFE}_final_v3/${EVALUATION_TASK}_${RESULT_PREFIX_SAFE}_${CLUSTER_ID}"
 
 mkdir -p ${EVAL_DIR}
 
@@ -55,15 +55,17 @@ echo "$PROMPT" > "${EVAL_DIR}/prompt.txt"
 
 bash src/utils/create_timer.sh $NUM_HOURS $JOB_DIR/task/timer.sh
 
+# Copy scripts needed inside the container
+cp src/utils/check_cuda.py "${JOB_DIR}/check_cuda.py"
+cp "agents/${AGENT}/solve.sh" "${JOB_DIR}/agent_solve.sh"
+
 # Utils
 with_huggingface_overlay() {
-    echo with_huggingface_overlay start # todo rm
     mkdir -p "$TMP_SUBDIR/merged_huggingface"
     mkdir -p "$TMP_SUBDIR/upper_huggingface"
     mkdir -p "$TMP_SUBDIR/fuse_workdir"
     fuse-overlayfs -o "lowerdir=$HF_HOME,upperdir=$TMP_SUBDIR/upper_huggingface,workdir=$TMP_SUBDIR/fuse_workdir" "$TMP_SUBDIR/merged_huggingface"
     
-    echo command start # todo rm
     "$@"
     local exit_code=$?
     
@@ -92,7 +94,26 @@ with_record_the_time() {
 
 solve_task() {
     SOLVE_OUT="${EVAL_DIR}/solve_out.txt"
-    bash agents/${AGENT}/solve.sh "$NUM_HOURS" "$PROMPT" "$AGENT_CONFIG" "$JOB_DIR" "$JOB_TMP" "$HF_MERGED" > "${SOLVE_OUT}" 2>&1
+    timeout --signal=TERM --kill-after=30s "$((NUM_HOURS * 60 + 5))m" \
+    apptainer exec \
+        --nv \
+        -c \
+        --env PATH="/home/ben/.local/bin:$PATH" \
+        --env HF_HOME="${HF_HOME_NEW}" \
+        --env ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
+        --env CODEX_API_KEY="${OPENAI_API_KEY}" \
+        --env GEMINI_API_KEY="${GEMINI_API_KEY}" \
+        --env VLLM_API_KEY="inspectai" \
+        --env PYTHONNOUSERSITE="1" \
+        --env PROMPT="${PROMPT}" \
+        --env AGENT_CONFIG="${AGENT_CONFIG}" \
+        --bind "${JOB_TMP}:/tmp" \
+        --bind "${HF_MERGED}:${HF_HOME_NEW}" \
+        --home "${JOB_DIR}:/home/ben" \
+        --pwd "/home/ben/task" \
+        --writable-tmpfs \
+        "${POST_TRAIN_BENCH_CONTAINERS_DIR}/${POST_TRAIN_BENCH_CONTAINER_NAME}.sif" \
+        bash -c "python /home/ben/check_cuda.py && bash /home/ben/agent_solve.sh" > "${SOLVE_OUT}" 2>&1
 }
 
 echo "================================"
