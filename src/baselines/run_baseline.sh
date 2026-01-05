@@ -23,6 +23,14 @@ echo "Cluster ID: ${CLUSTER_ID}"
 
 source src/commit_utils/set_env_vars.sh
 
+apptainer exec \
+  --nv \
+  --env HF_HOME="${HF_HOME}" \
+  --writable-tmpfs \
+  --bind "${REPO_ROOT}:${REPO_ROOT}" \
+  ${POST_TRAIN_BENCH_CONTAINERS_DIR}/${POST_TRAIN_BENCH_CONTAINER_NAME}.sif \
+  python src/utils/check_cuda.py > "${RESULT_DIR}/cuda_check.txt"
+
 echo "================================"
 echo "========= RUNNING EVAL ========="
 echo "================================"

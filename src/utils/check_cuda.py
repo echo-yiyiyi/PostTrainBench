@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import time
 from pathlib import Path
 import subprocess
 import torch
