@@ -50,7 +50,7 @@ fi
 cp -r "containers/other_home_data/.codex" "${JOB_DIR}/"
 
 BENCHMARK=$(cat src/eval/tasks/${EVALUATION_TASK}/benchmark.txt)
-PROMPT=$(python src/eval/general/get_prompt.py --model-to-train "$MODEL_TO_TRAIN" --benchmark "$BENCHMARK" --num-hours "$NUM_HOURS" --agent "${AGENT}")
+PROMPT=$(python src/eval/general/get_prompt.py --model-to-train "$MODEL_TO_TRAIN" --benchmark-id "$EVALUATION_TASK" --num-hours "$NUM_HOURS" --agent "${AGENT}")
 echo "$PROMPT" > "${EVAL_DIR}/prompt.txt"
 
 bash src/utils/create_timer.sh $NUM_HOURS $JOB_DIR/task/timer.sh
