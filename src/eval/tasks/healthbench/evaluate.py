@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""HealthBench Hard evaluation for PostTrainBench.
+"""HealthBench evaluation for PostTrainBench.
 
-Evaluates a model on 1,000 physician-curated medical conversations using
+Evaluates a model on physician-curated medical conversations using
 LLM-as-judge grading against rubric criteria.
 
+Supports two subsets:
+- Hard: 1,000 difficult examples (base models score ~0%)
+- Easy: 1,000 filtered examples targeting 40-50% base model performance
+
 Usage:
-    python evaluate.py --model-path Qwen/Qwen3-1.7B-Base --limit 5
-    python evaluate.py --model-path final_model/ --json-output-file results.json
+    python evaluate.py --model-path Qwen/Qwen3-1.7B-Base --subset hard --limit 5
+    python evaluate.py --model-path final_model/ --subset easy --json-output-file results.json
 """
 
 import os
@@ -26,7 +30,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from tqdm import tqdm
 
-from evaluation_code.data_loader import load_healthbench_hard, HealthBenchExample
+from evaluation_code.data_loader import load_healthbench, HealthBenchExample
 from evaluation_code.grader import grade_examples_parallel, ExampleResult
 from evaluation_code.scoring import aggregate_scores, BenchmarkResult
 
@@ -39,8 +43,19 @@ VLLM_HEALTH_TIMEOUT = 600
 VLLM_REQUEST_TIMEOUT = 300
 VLLM_GENERATION_RETRY = 3
 
-BENCHMARK = "HealthBench Hard"
 JUDGE_MODEL = "gpt-5-mini"
+
+# Subset configurations
+SUBSET_CONFIG = {
+    "hard": {
+        "benchmark": "HealthBench Hard",
+        "description": "1,000 difficult examples (base models score ~0%)"
+    },
+    "easy": {
+        "benchmark": "HealthBench Easy",
+        "description": "1,000 filtered examples (targeting 40-50% base model performance)"
+    }
+}
 
 
 def _model_alias(model_path: str) -> str:
@@ -308,9 +323,18 @@ def main():
         default=JUDGE_MODEL,
         help=f"Model for grading (default: {JUDGE_MODEL})."
     )
+    parser.add_argument(
+        '--subset',
+        type=str,
+        choices=['hard', 'easy'],
+        default='hard',
+        help="Which HealthBench subset to evaluate (default: hard)."
+    )
     args = parser.parse_args()
 
     model_alias = _model_alias(args.model_path)
+    subset_config = SUBSET_CONFIG[args.subset]
+    benchmark_name = subset_config["benchmark"]
 
     # Check for OpenAI API key
     if "OPENAI_API_KEY" not in os.environ:
@@ -319,8 +343,9 @@ def main():
         )
 
     # Load data
-    print(f"[data] Loading HealthBench Hard dataset...")
-    examples = load_healthbench_hard(limit=args.limit)
+    print(f"[data] Loading {benchmark_name} dataset...")
+    print(f"[data] Subset: {args.subset} - {subset_config['description']}")
+    examples = load_healthbench(subset=args.subset, limit=args.limit)
     print(f"[data] Loaded {len(examples)} examples")
 
     # Generate answers
@@ -348,10 +373,13 @@ def main():
 
     # Compute metrics
     metrics = _compute_metrics(results, examples)
+    metrics["subset"] = args.subset
+    metrics["benchmark"] = benchmark_name
 
     # Print summary
-    print(f"\n[done] HealthBench Hard Evaluation Complete")
+    print(f"\n[done] {benchmark_name} Evaluation Complete")
     print(f"  Model: {model_alias}")
+    print(f"  Subset: {args.subset}")
     print(f"  Examples: {metrics['n_examples']}")
     print(f"  Accuracy: {metrics['accuracy']:.4f} (±{metrics['stderr']:.4f})")
     print(f"  Grader calls: {metrics['total_grader_calls']}")

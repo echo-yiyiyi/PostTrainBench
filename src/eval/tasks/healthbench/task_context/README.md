@@ -1,8 +1,26 @@
-# HealthBench Hard - Task Context for Agents
+# HealthBench - Task Context for Agents
 
 ## Overview
 
-HealthBench Hard is a subset of 1,000 challenging medical conversations from OpenAI's HealthBench benchmark. Your goal is to post-train the base model to generate better responses to health-related queries.
+HealthBench evaluates models on physician-curated medical conversations from OpenAI's HealthBench benchmark. Your goal is to post-train the base model to generate better responses to health-related queries.
+
+## Subsets
+
+Two subsets are available:
+
+### HealthBench Hard (default)
+- **1,000 examples** selected for maximum difficulty
+- Base models score **~0%** (essentially random)
+- Tests if agents can post-train for challenging medical tasks
+- Use `--subset hard` (or omit, as this is the default)
+
+### HealthBench Easy
+- **1,000 examples** filtered for moderate difficulty
+- Base models target **40-50%** performance
+- Allows agents to demonstrate incremental progress
+- Use `--subset easy`
+
+**Filtering criteria for Easy:** Non-hard examples with ≤2 negative criteria, stratified sampled to preserve theme distribution.
 
 ## Evaluation
 
@@ -54,13 +72,20 @@ Suggested alternative datasets:
 ## Evaluation Command
 
 ```bash
-python evaluate.py --model-path final_model/ --limit 50  # Quick check
-python evaluate.py --model-path final_model/              # Full evaluation
+# Hard subset (default)
+python evaluate.py --model-path final_model/ --subset hard --limit 50  # Quick check
+python evaluate.py --model-path final_model/ --subset hard              # Full evaluation
+
+# Easy subset
+python evaluate.py --model-path final_model/ --subset easy --limit 50  # Quick check
+python evaluate.py --model-path final_model/ --subset easy              # Full evaluation
 ```
 
 ## Expected Baseline Scores
 
-**Overall scores (HealthBench Hard is extremely difficult):**
+### HealthBench Hard
+
+**Overall scores (extremely difficult):**
 - Base models: 0% overall (expected — base models can't follow instructions)
 - Instruction-tuned: 0% overall, but ~7-8% accuracy
 
@@ -71,7 +96,15 @@ python evaluate.py --model-path final_model/              # Full evaluation
 | SmolLM3/Gemma/DeepSeek Base | 0-2% | 14-18% | 0-5% |
 | Qwen Instruct | **7.8%** | 2% | 0% |
 
-**Key Insight:** Instruction-tuning improves accuracy from ~0% to ~8%. This is the headroom available for post-training agents to target.
+### HealthBench Easy
 
-The gap between base and instruction-tuned shows the potential improvement available through post-training. Target improving accuracy while maintaining or improving communication quality.
+**Target performance:**
+- Base models: 40-50% overall (allows demonstrating progress)
+- Instruction-tuned: Higher (establishes ceiling)
+
+### Key Insights
+
+1. **Hard subset:** The gap between base (~0%) and instruction-tuned (~8% accuracy) shows the potential improvement available through post-training.
+2. **Easy subset:** Allows agents to show meaningful progress during training, not just at the end.
+3. **Target:** Improve accuracy while maintaining or improving communication quality.
 
