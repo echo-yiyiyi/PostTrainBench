@@ -43,8 +43,8 @@ For PTB 1.0, includes a filtered "Easy" subset that allows agents to show progre
 | Examples | 1,000 | 1,000 |
 | Avg criteria/example | 6.3 | 11.8 |
 | Negative criteria/example | 1.3 | 4.1 |
-| **SmolLM3-3B-Base overall** | **27.6%** | ~0% |
-| **SmolLM3-3B-Base accuracy** | **40.4%** | 2% |
+| **SmolLM3-3B-Base overall** | **31.6%** | ~0% |
+| **SmolLM3-3B-Base accuracy** | **43.2%** | 2% |
 
 **Filtering criteria:**
 - Non-hard examples (excluded from Hard subset)

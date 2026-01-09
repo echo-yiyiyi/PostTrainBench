@@ -185,12 +185,21 @@ def grade_criterion(
         try:
             _acquire_api_slot()
             try:
-                response = client.chat.completions.create(
-                    model=grader_model,
-                    messages=[{"role": "user", "content": grader_prompt}],
-                    temperature=0,
-                    max_tokens=512
-                )
+                # gpt-5/o1/o3 models require max_completion_tokens and don't support temperature
+                # They also need higher token limits because they use reasoning tokens internally
+                if "gpt-5" in grader_model or "o1" in grader_model or "o3" in grader_model:
+                    response = client.chat.completions.create(
+                        model=grader_model,
+                        messages=[{"role": "user", "content": grader_prompt}],
+                        max_completion_tokens=4096  # Need room for reasoning + output
+                    )
+                else:
+                    response = client.chat.completions.create(
+                        model=grader_model,
+                        messages=[{"role": "user", "content": grader_prompt}],
+                        temperature=0,
+                        max_tokens=512
+                    )
             finally:
                 _release_api_slot()
             
