@@ -20,7 +20,7 @@ def list_runs_no_metrics():
             # Check if metrics.json and final_model/ are both missing
             metrics_file = subsubdir / "metrics.json"
             final_model_dir = subsubdir / "final_model"
-            if not metrics_file.exists() and final_model_dir.exists():
+            if not metrics_file.exists() and final_model_dir.exists() and any(final_model_dir.iterdir()):
                 print(subsubdir)
 
 if __name__ == "__main__":
