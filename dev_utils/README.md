@@ -16,7 +16,7 @@ export POST_TRAIN_BENCH_JOB_SCHEDULER="htcondor_mpi-is"
 Likely it is also good to set
 ```
 export POST_TRAIN_BENCH_CONTAINERS_DIR="/fast/username/ptb_containers"
-export POST_TRAIN_BENCH_CONTAINERS_DIR="/fast/username/ptb_results"
+export POST_TRAIN_BENCH_RESULTS_DIR="/fast/username/ptb_results"
 ```
 or similar. Substitute "username" by your username.
 You will need to move your containers there after this this.
