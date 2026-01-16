@@ -5,7 +5,13 @@ Some useful scripts after running experiments:
 - `dev_utils/contamination_list.py` to see runs where contamination occured (sometimes useful to check if the judge works correctly).
 
 ## For our internal cluster (MPI)
-#### Gemmini issues
+#### Env var
+Set this in your `.bashrc` or `.zshrc`
+```
+export POST_TRAIN_BENCH_JOB_SCHEDULER="htcondor_mpi-is"
+```
+
+#### Gemini issues
 Gemini sometimes runs into issues like "API Error: exception TypeError: fetch failed sending request".
 This likely is a result of running to many jobs at once.
 You can find such jobs with the `dev_utils/api_error_list.py` script.
