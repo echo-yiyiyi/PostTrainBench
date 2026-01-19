@@ -38,7 +38,9 @@ You can find such jobs with the `dev_utils/api_error_list.py` script.
 You can use the submission file `src/commit_utils/single_task_gemini.sub` instead of `src/commit_utils/single_task.sub`, to only have 8 gemini jobs running at once (even if you submit more).
 
 #### Huggingface Cache
-If you point your huggingface cache to some subdir of `/fast`, first build the soft-file-locking container via
+If you point your huggingface cache to some subdir of `/fast`, set `HF_HOME` to a subfolder of fast and then download the cache in the following way:
+
+First build the soft-file-locking container via
 ```
 bash containers/build_container.sh soft_file_locking
 ```
@@ -46,4 +48,8 @@ Then download the huggingface cache inside this container.
 You can start a shell with the container by calling
 ```
 bash dev_utils/shell.sh soft_file_locking
+```
+and call the following inside the container
+```
+bash containers/download_hf_cache/download_hf_cache.sh
 ```
