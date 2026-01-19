@@ -298,6 +298,11 @@ def main():
         default=None,
         help="Optional path to output the metrics as a JSON file."
     )
+    parser.add_argument(
+        '--store-outputs',
+        action='store_true',
+        help="Store model answers to disk (default: off)."
+    )
     args = parser.parse_args()
 
     model_alias = _model_alias(args.model_path)
@@ -317,6 +322,23 @@ def main():
     # Generate answers
     responses = generate_answers(args, examples)
     print(f"[generate] Generated {len(responses)} responses")
+
+    # Save model outputs if requested
+    if args.store_outputs:
+        output_dir = Path(__file__).parent / "evaluation_code" / "data" / "model_answer"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"{model_alias}.jsonl"
+        print(f"[generate] Saving model outputs to {output_path}")
+        with open(output_path, "w", encoding="utf-8") as fout:
+            for example, response in zip(examples, responses):
+                record = {
+                    "example_id": example.example_id,
+                    "model": model_alias,
+                    "conversation": example.conversation,
+                    "response": response,
+                    "tstamp": time.time(),
+                }
+                fout.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     # Grade responses
     print(f"[judge] Grading responses...")
