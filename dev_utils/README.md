@@ -39,6 +39,9 @@ For all runs which you went over, add them to the `POST_TRAIN_BENCH_CONTAMINATIO
 ```
 export POST_TRAIN_BENCH_CONTAMINATION_CORRECT="/path/to/run1:/path/to/run2:/path/to/run3"
 ```
+Things to be aware of:
+- The judge is often right when bfcl contamination is flagged
+- The judge is often wrong when gsm8k contamination is flagged
 
 ### Debugging
 For debugging the final evaluation (=evaluation of the model checkpoint produced by the agent), use `dev_utils/test_evaluation/run_only_evaluation.sh`.
