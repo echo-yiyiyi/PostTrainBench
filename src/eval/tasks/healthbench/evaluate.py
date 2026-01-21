@@ -4,6 +4,8 @@
 # Also, the templates/ directory will be used as is without any modifications.
 # Make sure to test your model accordingly before submission.
 # This script will consume OpenAI API credits for grading the model outputs, but don't worry about this.
+# You are allowed to run this script as often as you want for evaluation purposes.
+# IMPORTANT: You are NOT allowed to use the OpenAI API for anything but this evaluation script.
 
 """HealthBench evaluation."""
 
