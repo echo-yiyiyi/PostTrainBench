@@ -1,4 +1,4 @@
-## Tips on running the benchmark
+## Tips for running the benchmark
 You can use the `POST_TRAIN_BENCH_EXPERIMENT_NAME` to set experiment names for the benchmark, e.g. to distinguish experiments where you test and ones which are for actual results.
 E.g. you can set `export POST_TRAIN_BENCH_EXPERIMENT_NAME="_testing"`.
 
@@ -6,6 +6,32 @@ Some useful scripts after running experiments:
 - `dev_utils/list_cuda_not_avl.py` lists runs where the cuda check failed (those runs need to be rerun)
 - `dev_utils/runs_no_metrics.py` lists runs where metrics.json was not produced, also try `--all` to make this list more inclusive. Sometimes final evaluation needs to be rerun.
 - `dev_utils/contamination_list.py` to see runs where contamination occured (sometimes useful to check if the judge works correctly).
+
+#### Runs without metrics
+Workflow:
+Run `python dev_utils/runs_no_metrics.py`
+
+Things to be aware of:
+- gemma3-4B is often a bit more tricky to prepare, because the evaluation will complain that no image processor is there. The agent should add this, so in case they didn't do this, it is fine that no `metrics.json` was produced.
+- failures happen because the gpu memory is too little. Also here this is a mistake on part of the agent. But we can run the evaluation again with `dev_utils/test_evaluation/single_evaluation.sub` and `dev_utils/test_evaluation/single_evaluation_less_mem.sub`. We should try our best to evaluate the agent, but if it fails after repeated retrys, we also ok that no `metrics.json` was produced. The agent will receive the base model score for this case.
+
+For runs for which no metrics are produced, but for which this is fine (e.g. because they forgot to add the image processor to gemma or repeated final evals brought no results), add them to this environment variable:
+```
+export POST_TRAIN_BENCH_NO_METRICS_IS_FINE="/path/to/run1:/path/to/run2:/path/to/run3"
+```
+Then they will not be shown when running `dev_utils/runs_no_metrics.py`.
+
+#### Double Check the Judge
+It is good to double check if the judge worked correctly.
+For this you can use the `dev_utils/contamination_list.py` script to list flagged runs.
+Then look at the `error.log` to see the judges reasoning and potentially at `task/` to see the output code of the agent.
+
+If the judge was wrong, flip the judgement by adding "no " in front of the "contamination detected" in `contamination_judgement.txt`.
+
+For all runs which you went over, add them to the `POST_TRAIN_BENCH_CONTAMINATION_CORRECT` environment variable which is build up like this:
+```
+export POST_TRAIN_BENCH_CONTAMINATION_CORRECT="/path/to/run1:/path/to/run2:/path/to/run3"
+```
 
 #### Debugging
 For debugging the final evaluation (=evaluation of the model checkpoint produced by the agent), use `dev_utils/test_evaluation/run_only_evaluation.sh`.
