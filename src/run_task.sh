@@ -55,6 +55,13 @@ echo "$PROMPT" > "${EVAL_DIR}/prompt.txt"
 
 bash src/utils/create_timer.sh $NUM_HOURS $JOB_DIR/task/timer.sh
 
+# set openai api keys appropriately
+export CODEX_API_KEY="${OPENAI_API_KEY}"
+unset OPENAI_API_KEY
+if [ "$EVALUATION_TASK" == "arenahardwriting" ] || [ "$EVALUATION_TASK" == "healthbench" ]; then
+    export OPENAI_API_KEY="${CODEX_API_KEY}"
+fi
+
 # Copy scripts needed inside the container
 cp src/utils/check_cuda.py "${JOB_DIR}/check_cuda.py"
 cp src/utils/check_cuda_writing.py "${JOB_DIR}/check_cuda_writing.py"
@@ -102,7 +109,7 @@ solve_task() {
         --env PATH="/root/.local/bin:/home/ben/.local/bin:$PATH" \
         --env HF_HOME="${HF_HOME_NEW}" \
         --env ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
-        --env CODEX_API_KEY="${OPENAI_API_KEY}" \
+        --env CODEX_API_KEY="${CODEX_API_KEY}" \
         --env GEMINI_API_KEY="${GEMINI_API_KEY}" \
         --env KIMI_API_KEY="${KIMI_API_KEY}" \
         --env VLLM_API_KEY="inspectai" \
@@ -135,7 +142,7 @@ with_huggingface_overlay apptainer exec \
     -c \
     --env PATH="/root/.local/bin:/home/ben/.local/bin:$PATH" \
     --env HF_HOME="${HF_HOME_NEW}" \
-    --env CODEX_API_KEY="${OPENAI_API_KEY}" \
+    --env CODEX_API_KEY="${CODEX_API_KEY}" \
     --env VLLM_API_KEY="inspectai" \
     --env PYTHONNOUSERSITE="1" \
     --bind "${JOB_TMP}:/tmp" \

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+unset ANTHROPIC_API_KEY
+unset GEMINI_API_KEY
+unset KIMI_API_KEY
+
 file=/home/ben/.codex/config.toml
 tmp="$(mktemp)"
 printf 'model_reasoning_effort = "low"\n\n' > "$tmp"
