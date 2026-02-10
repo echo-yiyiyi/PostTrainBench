@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-"""Pretty-print Codex CLI stream JSON files."""
+"""Pretty-print Codex CLI stream JSON files.
+
+Auto-detects format: if one of the first 200 lines starts with
+'{"type":"thread.started"', the structured JSON parser is used;
+otherwise the file is copied verbatim.
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
 import shlex
+import shutil
 from pathlib import Path
 from typing import Any
+
+DETECT_LINES = 200
+DETECT_PREFIX = '{"type":"thread.started"'
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Convert a Codex CLI --json output file into a human-readable text report."
+            "Convert a Codex CLI --json output file into a human-readable text report. "
+            "Auto-detects structured JSON vs plain text."
         )
     )
     parser.add_argument(
@@ -43,6 +53,29 @@ def default_output_path(input_path: Path) -> Path:
     if suffix:
         return input_path.with_suffix(f"{suffix}.parsed.txt")
     return input_path.with_name(f"{input_path.name}.parsed.txt")
+
+
+def is_structured_json(input_path: Path) -> bool:
+    """Check if the file is structured Codex JSON by scanning the first DETECT_LINES lines."""
+    with input_path.open("r", encoding="utf-8") as f:
+        for i, line in enumerate(f):
+            if i >= DETECT_LINES:
+                break
+            if line.lstrip().startswith(DETECT_PREFIX):
+                return True
+    return False
+
+
+def copy_file(input_path: Path, args: argparse.Namespace) -> None:
+    """Copy the input file verbatim to the output."""
+    if args.stdout:
+        print(input_path.read_text(encoding="utf-8"))
+        return
+
+    output_path = args.output or default_output_path(input_path)
+    with input_path.open("rb") as src, output_path.open("wb") as dst:
+        shutil.copyfileobj(src, dst)
+    print(f"Wrote copied file to {output_path}")
 
 
 def pretty_format_json(obj: Any, indent_level: int = 0) -> str:
@@ -408,6 +441,10 @@ def main() -> None:
     input_path: Path = args.input
     if not input_path.exists():
         raise SystemExit(f"Input file not found: {input_path}")
+
+    if not is_structured_json(input_path):
+        copy_file(input_path, args)
+        return
 
     output_path = args.output or default_output_path(input_path)
 
