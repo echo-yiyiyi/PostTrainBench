@@ -1,5 +1,8 @@
+if [ "${POST_TRAIN_BENCH_JOB_SCHEDULER}" = "htcondor_mpi-is" ]; then
+    source /etc/profile.d/modules.sh
+fi
+
 export HF_HOME_NEW="/home/ben/hf_cache"
-source /etc/profile.d/modules.sh
 
 # Helper function: sets variable to default if unset or "UNDEFINED"
 set_default() {
