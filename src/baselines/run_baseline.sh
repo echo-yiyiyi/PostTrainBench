@@ -71,7 +71,7 @@ check_cuda() {
         --writable-tmpfs \
         --bind "${REPO_ROOT}:${REPO_ROOT}" \
         --bind "${HF_MERGED}:${TMP_HF_CACHE}" \
-        ${POST_TRAIN_BENCH_CONTAINERS_DIR}/${POST_TRAIN_BENCH_CONTAINER_NAME}.sif \
+        ${POST_TRAIN_BENCH_CONTAINERS_DIR}/vllm_debug.sif \
         python src/utils/check_cuda_writing.py > "${RESULT_DIR}/cuda_check.txt"
 }
 
@@ -87,7 +87,7 @@ run_eval() {
         --bind "${REPO_ROOT}:${REPO_ROOT}" \
         --bind "${HF_MERGED}:${TMP_HF_CACHE}" \
         --pwd "${REPO_ROOT}/src/eval/tasks/${EVAL_NAME}" \
-        ${POST_TRAIN_BENCH_CONTAINERS_DIR}/${POST_TRAIN_BENCH_CONTAINER_NAME}.sif \
+        ${POST_TRAIN_BENCH_CONTAINERS_DIR}/vllm_debug.sif \
         python "evaluate.py" \
             --model-path "${MODEL_NAME}" \
             --templates-dir ../../../../src/eval/templates \

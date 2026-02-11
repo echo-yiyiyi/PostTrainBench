@@ -215,7 +215,7 @@ run_evaluation() {
         --bind "${REPO_ROOT}:${REPO_ROOT}" \
         --bind "${HF_MERGED}:${TMP_HF_CACHE}" \
         --pwd "$(pwd)/src/eval/tasks/${EVALUATION_TASK}" \
-        ${POST_TRAIN_BENCH_CONTAINERS_DIR}/${POST_TRAIN_BENCH_CONTAINER_NAME}.sif python "evaluate.py" \
+        ${POST_TRAIN_BENCH_CONTAINERS_DIR}/vllm_debug.sif python "evaluate.py" \
             --model-path "$EVAL_DIR/final_model" \
             --templates-dir ../../../../src/eval/templates \
             --limit -1 \
