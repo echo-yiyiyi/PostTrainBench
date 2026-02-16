@@ -55,7 +55,7 @@ From: nvidia/cuda:12.9.1-cudnn-devel-ubuntu22.04
         trl \
         peft \
         tiktoken \
-        inspect-ai \
+        inspect-ai==0.3.159 \
         matplotlib \
         certifi
 

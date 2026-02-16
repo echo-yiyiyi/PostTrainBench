@@ -86,47 +86,50 @@ def _download_dataset(entry: dict, index: int, total: int, dry_run: bool) -> Tup
     configs = entry.get('configs', [entry.get('config', 'default')])
     splits = entry.get('splits', [])
 
-    # Check if already cached
-    repo_folder = _repo_folder('datasets', dataset_name)
-    cache_key = _to_cache_key(dataset_name)
-    cached = _any_exists([
-        HUB_ROOT / repo_folder,
-        CACHE_ROOT / repo_folder,
-        DATASET_CACHE_DIR / cache_key
-    ])
+    try:
+        # Check if already cached
+        repo_folder = _repo_folder('datasets', dataset_name)
+        cache_key = _to_cache_key(dataset_name)
+        cached = _any_exists([
+            HUB_ROOT / repo_folder,
+            CACHE_ROOT / repo_folder,
+            DATASET_CACHE_DIR / cache_key
+        ])
 
-    if cached:
-        _safe_print(f"[{index}/{total}] Skipping dataset: {dataset_name} (already cached)")
-        return dataset_name, True
+        if cached:
+            _safe_print(f"[{index}/{total}] Skipping dataset: {dataset_name} (already cached)")
+            return dataset_name, True
+        # Download each config
+        for config in configs:
+            label = f"{dataset_name} ({config})" if config else dataset_name
 
-    # Download each config
-    for config in configs:
-        label = f"{dataset_name} ({config})" if config else dataset_name
+            if dry_run:
+                if splits:
+                    _safe_print(f"[{index}/{total}] Would download dataset: {label} [splits={splits}]")
+                else:
+                    _safe_print(f"[{index}/{total}] Would download dataset: {label}")
+                continue
 
-        if dry_run:
             if splits:
-                _safe_print(f"[{index}/{total}] Would download dataset: {label} [splits={splits}]")
+                for split in splits:
+                    _safe_print(f"[{index}/{total}] Downloading dataset: {label} [split={split}]...")
+                    kwargs = {'split': split}
+                    if config and config != 'default':
+                        kwargs['name'] = config
+                    load_dataset(dataset_name, **kwargs)
             else:
-                _safe_print(f"[{index}/{total}] Would download dataset: {label}")
-            continue
-
-        if splits:
-            for split in splits:
-                _safe_print(f"[{index}/{total}] Downloading dataset: {label} [split={split}]...")
-                kwargs = {'split': split}
+                _safe_print(f"[{index}/{total}] Downloading dataset: {label}...")
+                kwargs = {}
                 if config and config != 'default':
                     kwargs['name'] = config
                 load_dataset(dataset_name, **kwargs)
-        else:
-            _safe_print(f"[{index}/{total}] Downloading dataset: {label}...")
-            kwargs = {}
-            if config and config != 'default':
-                kwargs['name'] = config
-            load_dataset(dataset_name, **kwargs)
 
-    if not dry_run:
-        _safe_print(f"[{index}/{total}] Dataset {dataset_name} downloaded successfully")
-    return dataset_name, True
+        if not dry_run:
+            _safe_print(f"[{index}/{total}] Dataset {dataset_name} downloaded successfully")
+        return dataset_name, True
+    except Exception as e:
+        _safe_print(f"[{index}/{total}] FAILED to download dataset: {dataset_name} - {e}")
+        return dataset_name, False
 
 
 def download_models(models: List[str], dry_run: bool = False) -> None:
@@ -141,8 +144,9 @@ def download_models(models: List[str], dry_run: bool = False) -> None:
             future.result()  # Raise any exceptions
 
 
-def download_datasets(datasets: List[dict], dry_run: bool = False, workers: int = 4) -> None:
-    """Download all datasets that aren't already cached."""
+def download_datasets(datasets: List[dict], dry_run: bool = False, workers: int = 4) -> List[str]:
+    """Download all datasets that aren't already cached. Returns list of failed dataset names."""
+    failed = []
     total = len(datasets)
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {
@@ -150,7 +154,10 @@ def download_datasets(datasets: List[dict], dry_run: bool = False, workers: int 
             for i, entry in enumerate(datasets, 1)
         }
         for future in as_completed(futures):
-            future.result()  # Raise any exceptions
+            name, success = future.result()
+            if not success:
+                failed.append(name)
+    return failed
 
 
 def main(dry_run: bool = False, workers: int = 4) -> None:
@@ -166,7 +173,14 @@ def main(dry_run: bool = False, workers: int = 4) -> None:
 
     download_models(resources['models'], dry_run=dry_run)
     print()
-    download_datasets(resources['datasets'], dry_run=dry_run, workers=workers)
+    failed = download_datasets(resources['datasets'], dry_run=dry_run, workers=workers)
+
+    if failed:
+        log_path = SCRIPT_DIR / 'failed_downloads.log'
+        with open(log_path, 'w') as f:
+            for name in sorted(failed):
+                f.write(name + '\n')
+        print(f"\n{len(failed)} dataset(s) failed. See: {log_path}")
 
     print(f"\nCache location: {CACHE_ROOT}")
 
