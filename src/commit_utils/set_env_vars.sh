@@ -16,12 +16,12 @@ set_default() {
     fi
 }
 
-set_default HF_HOME "$HOME/.cache/huggingface"
+set_default HF_HOME "/ibex/user/yangz0h/hf_home"
 set_default POST_TRAIN_BENCH_RESULTS_DIR "results"
 set_default POST_TRAIN_BENCH_CONTAINERS_DIR "containers"
 set_default POST_TRAIN_BENCH_CONTAINER_NAME "standard"
 set_default POST_TRAIN_BENCH_PROMPT "prompt"
-set_default POST_TRAIN_BENCH_JOB_SCHEDULER "htcondor"
+set_default POST_TRAIN_BENCH_JOB_SCHEDULER "slurm"
 set_default POST_TRAIN_BENCH_EXPERIMENT_NAME ""
 
 export PYTHONNOUSERSITE=1

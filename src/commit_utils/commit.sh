@@ -1,23 +1,24 @@
 #!/bin/bash
 source src/commit_utils/set_env_vars.sh
+source .env
 
 models=(
-    "google/gemma-3-4b-pt"
-    "Qwen/Qwen3-4B-Base"
+    # "google/gemma-3-4b-pt"
+    # "Qwen/Qwen3-4B-Base"
     "Qwen/Qwen3-1.7B-Base"
-    "HuggingFaceTB/SmolLM3-3B-Base"
+    # "HuggingFaceTB/SmolLM3-3B-Base"
 )
 
 evals=(
     "aime2025"
-    "arenahardwriting"
-    "bfcl"
-    "gpqamain"
-    "gsm8k"
-    "humaneval"
-    "healthbench"
+    # "arenahardwriting"
+    # "bfcl"
+    # "gpqamain"
+    # "gsm8k"
+    # "humaneval"
+    # "healthbench"
 )
-export POST_TRAIN_BENCH_EXPERIMENT_NAME="_run2"
+export POST_TRAIN_BENCH_EXPERIMENT_NAME="_run_test"
 for model in "${models[@]}"; do
     for eval in "${evals[@]}"; do
         echo ""
@@ -42,6 +43,13 @@ for model in "${models[@]}"; do
             condor_submit_bid -a "agent=gemini" -a "agent_config=models/gemini-3-pro-preview" -a "eval=$eval" -a "model_to_train=$model" -a "num_hours=10" src/commit_utils/single_task.sub
             condor_submit_bid -a "agent=gemini" -a "agent_config=models/gemini-3-flash-preview" -a "eval=$eval" -a "model_to_train=$model" -a "num_hours=10" src/commit_utils/single_task.sub
             sleep 10
+        elif [ "${POST_TRAIN_BENCH_JOB_SCHEDULER}" = "slurm" ]; then
+            # sbatch \
+            #     --export=ALL,EVAL="$eval",AGENT="codex",AGENT_CONFIG="gpt-5.1-codex-max",MODEL_TO_TRAIN="$model",NUM_HOURS="1",SKIP_GPU_CHECK="1" \
+            #     src/commit_utils/single_task.sbatch
+            sbatch \
+                --export=ALL,EVAL="$eval",AGENT="claude",AGENT_CONFIG="claude-sonnet-4-5",MODEL_TO_TRAIN="$model",NUM_HOURS="1",SKIP_GPU_CHECK="1",CLAUDE_CREDENTIALS_DIR="$HOME/.claude" \
+                src/commit_utils/single_task.sbatch
         else
             echo ERROR: job scheduler "${POST_TRAIN_BENCH_JOB_SCHEDULER}" is not supported.
         fi

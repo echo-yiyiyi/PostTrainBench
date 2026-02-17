@@ -1,4 +1,6 @@
 #!/bin/bash
+module load singularity
+
 
 export EVALUATION_TASK="$1"
 AGENT="$2"
@@ -24,7 +26,7 @@ exec 2>${EVAL_DIR}/error.log
 
 echo "$@"
 
-export TMP_SUBDIR="/tmp/posttrain_container_${EVALUATION_TASK}_${RESULT_PREFIX_SAFE}_${RANDOM_UUID}"
+export TMP_SUBDIR="${TMPDIR:-/tmp}/posttrain_container_${EVALUATION_TASK}_${RESULT_PREFIX_SAFE}_${RANDOM_UUID}"
 
 JOB_DIR="${TMP_SUBDIR}/job_dir"
 JOB_TMP="${TMP_SUBDIR}/tmp"
@@ -104,7 +106,7 @@ SOLVE_OUT="${EVAL_DIR}/solve_out.txt"
 
 solve_task() {
     timeout --signal=TERM --kill-after=30s "$((NUM_HOURS * 60 + 5))m" \
-    apptainer exec \
+    singularity exec \
         --nv \
         -c \
         --env PATH="/root/.local/bin:/home/ben/.local/bin:$PATH" \
@@ -118,11 +120,12 @@ solve_task() {
         --env AGENT_CONFIG="${AGENT_CONFIG}" \
         --bind "${JOB_TMP}:/tmp" \
         --bind "${HF_MERGED}:${HF_HOME_NEW}" \
+        ${CLAUDE_CREDENTIALS_DIR:+--bind "${CLAUDE_CREDENTIALS_DIR}:/home/ben/.claude"} \
         --home "${JOB_DIR}:/home/ben" \
         --pwd "/home/ben/task" \
         --writable-tmpfs \
         "${POST_TRAIN_BENCH_CONTAINERS_DIR}/${POST_TRAIN_BENCH_CONTAINER_NAME}.sif" \
-        bash -c "python /home/ben/check_cuda.py && python /home/ben/check_cuda_writing.py && bash /home/ben/agent_solve.sh" > "${SOLVE_OUT}" 2>&1
+        bash -c "python /home/ben/check_cuda.py ${SKIP_GPU_CHECK:+--skip-gpu-check} && python /home/ben/check_cuda_writing.py ${SKIP_GPU_CHECK:+--skip-gpu-check} && bash /home/ben/agent_solve.sh" > "${SOLVE_OUT}" 2>&1
 }
 
 echo "================================"
@@ -151,7 +154,7 @@ echo "========================================="
 
 JUDGE_TASK=$(python src/disallowed_usage_judge/get_judge_prompt.py --benchmark "${BENCHMARK}" --model "${MODEL_TO_TRAIN}")
 
-with_huggingface_overlay apptainer exec \
+with_huggingface_overlay singularity exec \
     --nv \
     -c \
     --env PATH="/root/.local/bin:/home/ben/.local/bin:$PATH" \
@@ -188,7 +191,7 @@ python containers/delete_hf_models.py "${JOB_DIR}/task"
 
 cp -r "${JOB_DIR}/task" "$EVAL_DIR/task"
 
-rm -rf /tmp/posttrain_container
+rm -rf "${TMP_SUBDIR}"
 
 echo "================================"
 echo "========= EVALUATING ==========="
@@ -205,7 +208,7 @@ run_evaluation() {
     local eval_num="$2"
     nvidia-smi --query-compute-apps=pid --format=csv,noheader | xargs -r kill -9
     sleep 5
-    with_huggingface_overlay apptainer exec \
+    with_huggingface_overlay singularity exec \
         --nv \
         --env "HF_HOME=${TMP_HF_CACHE}" \
         --env OPENAI_API_KEY="${OPENAI_API_KEY}" \

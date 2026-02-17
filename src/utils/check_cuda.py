@@ -63,9 +63,17 @@ def check_h100():
     return True
 
 if __name__ == "__main__":
+    import argparse, sys
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--skip-gpu-check", action="store_true")
+    args = parser.parse_args()
+
+    if args.skip_gpu_check:
+        print("⚠ Skipping GPU check (--skip-gpu-check)")
+        sys.exit(0)
+
     cuda_available = check_h100()
     if not cuda_available:
         Path("cuda_not_available").touch()
 
-    import sys
     sys.exit(0 if cuda_available else 1)
